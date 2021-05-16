@@ -33,13 +33,12 @@ import copy
 
 try:
     from idaapi import *
-    from ida_problems import *
 except ImportError:
     class processor_t(object):
         pass
     dt_byte = dt_word = dt_dword = None
     PR_SEGS = PR_DEFSEG32 = PR_RNAMESOK = PR_ADJSEGS = PRN_HEX = PR_USE32 = 0
-    ASH_HEXF3 = ASD_DECF0 = ASO_OCTF1 = ASB_BINF3 = AS_NOTAB = AS_ASCIIC = AS_ASCIIZ = 0
+    ASH_HEXF3 = ASD_DECF0 = ASO_OCTF1 = ASB_BINF3 = AS_ASCIIC = AS_ASCIIZ = 0
     CF_CALL = CF_JUMP = CF_STOP = 0
     o_void = o_reg = o_imm = o_displ = o_near = None
 
@@ -84,7 +83,7 @@ class Operand:
         if self.xlate:
             val = self.xlate(val)
 
-        ret.dtyp = self.dt
+        ret.dtype = self.dt
         if self.type == Operand.REG:
             ret.type = o_reg
             ret.reg = val if val < 16 else 16
@@ -212,7 +211,8 @@ class XtensaProcessor(processor_t):
     instruc_start = 0
 
     assembler = {
-        "flag": ASH_HEXF3 | ASD_DECF0 | ASO_OCTF1 | ASB_BINF3 | 0 | AS_ASCIIC | AS_ASCIIZ,
+        "flag": ASH_HEXF3 | ASD_DECF0 | ASO_OCTF1 | ASB_BINF3
+            | AS_ASCIIC | AS_ASCIIZ,
         "uflag": 0,
         "name": "GNU assembler",
         "origin": ".org",
@@ -384,7 +384,7 @@ class XtensaProcessor(processor_t):
         ("mula.dd.hl",    0x2a0004, 0xffbfbf, Instr.fmt_RRR_mul_dd ),
         ("mula.dd.hh",    0x2b0004, 0xffbfbf, Instr.fmt_RRR_mul_dd ),
         ("mull",   0x820000, 0xff000f, Instr.fmt_RRR ),
-        ("mulsh",  0xb10000, 0xff000f, Instr.fmt_RRR ),
+        ("mulsh",  0xb20000, 0xff000f, Instr.fmt_RRR ),
         ("mul16s", 0xd10000, 0xff000f, Instr.fmt_RRR ),
         ("mul16u", 0xc10000, 0xff000f, Instr.fmt_RRR ),
         ("muluh",  0xa20000, 0xff000f, Instr.fmt_RRR ),
@@ -605,7 +605,6 @@ class XtensaProcessor(processor_t):
 
         feature = insn.get_canon_feature()
         if feature & CF_JUMP:
-            #remember_problem(Q_jumps, insn.ea)
             remember_problem(PR_JUMP, insn.ea)
         if not feature & CF_STOP:
             insn.add_cref(insn.ea + insn.size, 0, fl_F)
@@ -629,7 +628,6 @@ class XtensaProcessor(processor_t):
                 ctx.out_tagon(COLOR_ERROR)
                 ctx.out_long(op.addr, 16)
                 ctx.out_tagoff(COLOR_ERROR)
-                #remember_problem(Q_noName, ctx.insn.ea)
                 remember_problem(PR_NONAME, ctx.insn.ea)
         elif op.type == o_displ:
             ctx.out_register(self.reg_names[op.phrase])
