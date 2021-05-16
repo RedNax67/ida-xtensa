@@ -33,6 +33,7 @@ import copy
 
 try:
     from idaapi import *
+    from ida_problems import *
 except ImportError:
     class processor_t(object):
         pass
@@ -211,8 +212,7 @@ class XtensaProcessor(processor_t):
     instruc_start = 0
 
     assembler = {
-        "flag": ASH_HEXF3 | ASD_DECF0 | ASO_OCTF1 | ASB_BINF3 | AS_NOTAB
-            | AS_ASCIIC | AS_ASCIIZ,
+        "flag": ASH_HEXF3 | ASD_DECF0 | ASO_OCTF1 | ASB_BINF3 | 0 | AS_ASCIIC | AS_ASCIIZ,
         "uflag": 0,
         "name": "GNU assembler",
         "origin": ".org",
@@ -580,7 +580,7 @@ class XtensaProcessor(processor_t):
 
         insn.itype = instr.id
 
-        operands = [insn[i] for i in xrange(1, 6)]
+        operands = [insn[i] for i in range(1, 6)]
         for o in operands:
             o.type = o_void
         instr.parseOperands(operands, op, insn)
@@ -588,12 +588,12 @@ class XtensaProcessor(processor_t):
         return insn.size
 
     def emu(self, insn):
-        for i in xrange(1, 6):
+        for i in range(1, 6):
             op = insn[i]
             if op.type == o_void:
                 break
             elif op.type == o_mem:
-                insn.create_op_data(op.addr, 0, op.dtyp)
+                insn.create_op_data(op.addr, 0, op.dtype)
                 insn.add_dref(op.addr, 0, dr_R)
             elif op.type == o_near:
                 features = insn.get_canon_feature()
@@ -605,7 +605,8 @@ class XtensaProcessor(processor_t):
 
         feature = insn.get_canon_feature()
         if feature & CF_JUMP:
-            remember_problem(Q_jumps, insn.ea)
+            #remember_problem(Q_jumps, insn.ea)
+            remember_problem(PR_JUMP, insn.ea)
         if not feature & CF_STOP:
             insn.add_cref(insn.ea + insn.size, 0, fl_F)
         return True
@@ -628,7 +629,8 @@ class XtensaProcessor(processor_t):
                 ctx.out_tagon(COLOR_ERROR)
                 ctx.out_long(op.addr, 16)
                 ctx.out_tagoff(COLOR_ERROR)
-                remember_problem(Q_noName, ctx.insn.ea)
+                #remember_problem(Q_noName, ctx.insn.ea)
+                remember_problem(PR_NONAME, ctx.insn.ea)
         elif op.type == o_displ:
             ctx.out_register(self.reg_names[op.phrase])
             ctx.out_line(", ")
@@ -644,7 +646,7 @@ class XtensaProcessor(processor_t):
 
     def notify_out_insn(self, ctx):
         ctx.out_mnemonic()
-        for i in xrange(1, 6):
+        for i in range(1, 6):
             if ctx.insn[i].type == o_void:
                 break
 
